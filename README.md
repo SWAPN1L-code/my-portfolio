@@ -1,70 +1,143 @@
-# Getting Started with Create React App
+# Y2K Desktop Portfolio
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A nostalgic Y2K-inspired desktop environment portfolio built with React, featuring draggable windows, sound effects, and a minimal monochrome design aesthetic.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+### Desktop Environment
+- **Always-visible home window** with embedded navigation
+- **Draggable windows** that can be moved anywhere on screen
+- **Mac-style window controls** with decorative green/yellow dots and functional red close button
+- **No minimize functionality** - windows can only be closed for a clean experience
 
-### `npm start`
+### Interactive Elements
+- **Sound effects** on click and hover interactions using Web Audio API
+- **Smooth animations** and hover effects throughout the interface
+- **Dark/Light mode toggle** with complete theme switching
+- **Responsive design** that works across different screen sizes
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Content Sections
+- **About**: Personal introduction and background
+- **Work**: Featured projects, skills, and development tools
+- **Links**: Social media and platform links (Instagram, X, LinkedIn, LeetCode, GitHub)
+- **Contact**: Email and phone contact information with clickable links
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Design Philosophy
+- **Minimal aesthetics** with monochrome icons and clean typography
+- **Y2K nostalgia** with retro window styling and desktop metaphors
+- **White background** in light mode with subtle sky-blue wave accents
+- **Consistent spacing** and typography using mono font family
 
-### `npm test`
+## Tech Stack
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- **React 18** with Hooks (useState, useEffect, useRef)
+- **Tailwind CSS** for styling and responsive design
+- **Lucide React** for consistent iconography
+- **Web Audio API** for sound effects
+- **CSS animations** for smooth transitions and wave effects
 
-### `npm run build`
+## Getting Started
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Prerequisites
+- Node.js (version 14 or higher)
+- npm or yarn package manager
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Installation
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/y2k-desktop-portfolio.git
+cd y2k-desktop-portfolio
+```
 
-### `npm run eject`
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn install
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+3. Start the development server:
+```bash
+npm start
+# or
+yarn start
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+4. Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Customization
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Personal Information
+Update the following components with your own information:
 
-## Learn More
+- **AboutContent**: Personal bio and background
+- **WorkContent**: Projects, skills, and experience
+- **LinksContent**: Social media and platform URLs
+- **ContactContent**: Email and phone contact details
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Styling
+The portfolio uses a minimal color palette:
+- **Light mode**: White background with gray accents
+- **Dark mode**: Dark gradient with blue accents
+- **Accent color**: Orange (#F97316) for highlights
+- **Monochrome icons**: All icons use gray colors for consistency
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Sound Effects
+Sound effects use the Web Audio API and include:
+- Click sounds (800Hz frequency)
+- Hover sounds (600Hz frequency)
+- Automatic fallback if audio is not available
 
-### Code Splitting
+## Browser Compatibility
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+- **Chrome/Edge**: Full support including audio
+- **Firefox**: Full support including audio
+- **Safari**: Full support including audio
+- **Mobile browsers**: Visual features work, audio may require user interaction
 
-### Analyzing the Bundle Size
+## Performance Considerations
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+- **Lightweight**: No external dependencies beyond React and Tailwind
+- **Optimized rendering**: Efficient window management and state updates
+- **Smooth animations**: CSS-based transitions for optimal performance
+- **Memory efficient**: Clean component unmounting and event listener cleanup
 
-### Making a Progressive Web App
+## File Structure
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```
+src/
+├── components/
+│   ├── Y2KDesktopPortfolio.jsx    # Main portfolio component
+│   ├── DraggableWindow.jsx        # Window management logic
+│   ├── NavigationBox.jsx          # Home navigation buttons
+│   └── ContentComponents.jsx      # About, Work, Links, Contact content
+├── styles/
+│   └── globals.css               # Global styles and Tailwind imports
+└── App.jsx                       # Root application component
+```
 
-### Advanced Configuration
+## Contributing
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/new-feature`)
+3. Commit your changes (`git commit -am 'Add new feature'`)
+4. Push to the branch (`git push origin feature/new-feature`)
+5. Create a Pull Request
 
-### Deployment
+## License
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
-### `npm run build` fails to minify
+## Acknowledgments
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- Inspired by Y2K-era desktop environments and Sharlene Yap's portfolio design
+- Icons provided by [Lucide React](https://lucide.dev/)
+- Built with [Tailwind CSS](https://tailwindcss.com/) for styling
+- Sound effects generated using Web Audio API
+
+---
+
+**Live Demo**: [View Portfolio](https://your-portfolio-url.com)  
+**Developer**: Swapnil Negi  
+**Contact**: swapnilnegi06@gmail.com
