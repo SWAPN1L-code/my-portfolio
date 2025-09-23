@@ -125,9 +125,7 @@ src/
 4. Push to the branch (`git push origin feature/new-feature`)
 5. Create a Pull Request
 
-## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
 ## Acknowledgments
 
@@ -138,6 +136,6 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ---
 
-**Live Demo**: [View Portfolio](https://your-portfolio-url.com)  
+**Live Demo**: [View Portfolio](https://swapn1l-code.github.io/my-portfolio/)  
 **Developer**: Swapnil Negi  
 **Contact**: swapnilnegi06@gmail.com
