@@ -410,11 +410,12 @@ const ImageItem = ({ src, alt, description }) => (
 const AboutContent = () => (
   <div className="space-y-6">
     <div className="flex items-start space-x-4">
-      <img
-        src="/swapnil.jpg"
-        alt="Swapnil"
-        className="w-16 h-16 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center"
-      />
+     <img
+  src={`${process.env.PUBLIC_URL}/swapnil.jpg`}
+  alt="Swapnil"
+  className="w-16 h-16  rounded-full"
+/>
+
       <div>
         <h2 className="text-xl font-light text-orange-500 mb-1">Swapnil Negi</h2>
         <p className="text-gray-500 text-sm mb-1"> Web Developer</p>
@@ -445,69 +446,76 @@ const AboutContent = () => (
       </div>
       
      
-      
-      <div className="space-y-3">
-        <p>If passion had a leaderboard, I'd be topping it with football at #1.I don't just like football I live it, breathe it, and can probably debate tactics longer than a full 90-minute match.</p>
-        <div className="flex justify-center space-x-4">
-             <img
-        src="/football1.png"
-        alt="football1"
-        className="w-20 h-20  flex items-center justify-center"
-      />
-        <img
-        src="/football2.png"
-        alt="football2"
-        className="w-20 h-20  flex items-center justify-center"
-      />
-        <img
-        src="/football3.png"
-        alt="football3"
-        className="w-20 h-20  flex items-center justify-center"
-      />
-        </div>
-      </div>
+<div className="space-y-3">
+  <p>
+    If passion had a Premier League table, I’d be sitting top of the league with football—blue side of Manchester, obviously. I don’t just watch Man City, I overanalyze Pep’s tactics like it’s a PhD thesis.
+  </p>
+  <div className="flex justify-center space-x-4">
+    <img
+      src={`${process.env.PUBLIC_URL}/football1.png`}
+      alt="football1"
+      className="w-20 h-20"
+    />
+    <img
+      src={`${process.env.PUBLIC_URL}/football2.png`}
+      alt="football2"
+      className="w-20 h-20"
+    />
+    <img
+      src={`${process.env.PUBLIC_URL}/football3.png`}
+      alt="football3"
+      className="w-20 h-20"
+    />
+  </div>
+</div>
 
-      <div className="space-y-3">
-        <p>But here's the twist music owns my soul too.It's the rhythm to my daily life, the background score to every memory, and the one thing that makes even the longest day feel light.</p>
-        <div className="flex justify-center space-x-4">
-           <img
-        src="/kanye.png"
-        alt="kanye"
-        className="w-20 h-20  flex items-center justify-center"
-      />
-         <img
-        src="/frank.png"
-        alt="frank"
-        className="w-20 h-20  flex items-center justify-center"
-      />
-        </div>
-      </div>
-      
-      <div className="space-y-3">
-        <p>And when I'm not vibing to a track or yelling "GOAALLL," you'll probably find me on a mountain trail. Hiking isn't just an activity for me—it's my therapy, my adventure, and my way of proving to myself that no peak is too high.</p>
-        <div className="flex justify-center space-x-4">
-         <img
-        src="/mountain1.png"
-        alt="mountain1"
-        className="w-20 h-20  flex items-center justify-center"
-      />
-       <img
-        src="/mountain2.png"
-        alt="mountain2"
-        className="w-20 h-20  flex items-center justify-center"
-      />
-      <img
-        src="/mountain3.png"
-        alt="mountain3"
-        className="w-20 h-20  flex items-center justify-center"
-      />
-       <img
-        src="/mountain4.png"
-        alt="mountain4"
-        className="w-20 h-16  flex items-center justify-center"
-      />
-        </div>
-      </div>
+<div className="space-y-3">
+  <p>
+    When life gets noisy, Kanye and Frank Ocean run my soundtrack. One gives me stadium-level confidence, the other makes me stare at the ceiling and question the universe—balance is key.
+  </p>
+  <div className="flex justify-center space-x-4">
+    <img
+      src={`${process.env.PUBLIC_URL}/kanye.png`}
+      alt="kanye"
+      className="w-20 h-20"
+    />
+    <img
+      src={`${process.env.PUBLIC_URL}/frank.png`}
+      alt="frank"
+      className="w-20 h-20"
+    />
+  </div>
+</div>
+
+<div className="space-y-3">
+  <p>
+    And when I’m not yelling ‘GOAAALLL,’ I’m chasing actual goals—like climbing at least 10 mountains before 2030. Because if Haaland can score 50 in a season, the least I can do is summit a few peaks.
+  </p>
+  <div className="flex justify-center space-x-4">
+    <img
+      src={`${process.env.PUBLIC_URL}/mountain1.png`}
+      alt="mountain1"
+      className="w-20 h-20"
+    />
+    <img
+      src={`${process.env.PUBLIC_URL}/mountain2.png`}
+      alt="mountain2"
+      className="w-20 h-20"
+    />
+    <img
+      src={`${process.env.PUBLIC_URL}/mountain3.png`}
+      alt="mountain3"
+      className="w-20 h-20"
+    />
+    <img
+      src={`${process.env.PUBLIC_URL}/mountain4.png`}
+      alt="mountain4"
+      className="w-20 h-16"
+    />
+  </div>
+</div>
+
+
       
       <p className="text-orange-500 font-medium text-center">So yeah, football, music, and hiking—they're not hobbies, they're my holy trinity.</p>
     </div>
