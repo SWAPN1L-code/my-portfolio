@@ -1,724 +1,634 @@
-import React, { useState, useEffect } from 'react';
-import { X, Info, Link, Briefcase, HelpCircle, Mail, Twitter, Instagram, Github, Linkedin, Moon, Sun, Image } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Info, Link, Briefcase, HelpCircle, Mail, Twitter, Instagram, Github, Linkedin, Moon, Sun, Image, Menu, Maximize2, Minimize2 } from 'lucide-react';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { Button } from './components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
+import { cn } from './lib/utils';
 
 const Y2KDesktopPortfolio = () => {
   const [windows, setWindows] = useState([]);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    return saved ? JSON.parse(saved) : false;
+  });
   const [zIndexCounter, setZIndexCounter] = useState(1000);
-  
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Handle resize
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Persist theme
+  useEffect(() => {
+    localStorage.setItem('theme', JSON.stringify(isDarkMode));
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
   // Sound effects
-  const playClickSound = () => {
+  const playSound = (freq, type = 'sine', duration = 0.1) => {
     try {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      
+
+      oscillator.type = type;
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-      
+
+      oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+
       oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.1);
+      oscillator.stop(audioContext.currentTime + duration);
     } catch (e) {
-      console.log('Audio not available');
+      // Audio not available
     }
   };
 
-  const playHoverSound = () => {
-    try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
-      gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.05);
-    } catch (e) {
-      console.log('Audio not available');
-    }
-  };
+  const playClickSound = () => playSound(800, 'sine', 0.1);
+  const playHoverSound = () => playSound(600, 'triangle', 0.05);
+  const playOpenSound = () => playSound(400, 'sine', 0.2);
+  const playCloseSound = () => playSound(300, 'square', 0.15);
 
   const createWindow = (type, title, content) => {
+    playOpenSound();
+    const existingWindow = windows.find(w => w.type === type);
+
+    if (existingWindow) {
+      bringToFront(existingWindow.id);
+      return;
+    }
+
     const newWindow = {
       id: Date.now(),
       type,
       title,
       content,
-      x: Math.random() * 300 + 200,
-      y: Math.random() * 200 + 150,
-      width: 650,
-      height: 600,
-      zIndex: zIndexCounter
+      x: isMobile ? 0 : Math.random() * 100 + 100,
+      y: isMobile ? 0 : Math.random() * 100 + 50,
+      width: isMobile ? '100%' : 600,
+      height: isMobile ? '100%' : 500,
+      zIndex: zIndexCounter,
+      isMaximized: isMobile
     };
     setWindows(prev => [...prev, newWindow]);
     setZIndexCounter(prev => prev + 1);
+    if (isMobile) setIsMenuOpen(false);
   };
 
   const closeWindow = (id) => {
-    playClickSound();
+    playCloseSound();
     setWindows(prev => prev.filter(w => w.id !== id));
   };
 
   const bringToFront = (id) => {
-    setWindows(prev => prev.map(w => 
+    setWindows(prev => prev.map(w =>
       w.id === id ? { ...w, zIndex: zIndexCounter } : w
     ));
     setZIndexCounter(prev => prev + 1);
   };
 
-  const openAbout = () => {
-    playClickSound();
-    createWindow('about', 'about', <AboutContent />);
+  const toggleMaximize = (id) => {
+    setWindows(prev => prev.map(w =>
+      w.id === id ? { ...w, isMaximized: !w.isMaximized } : w
+    ));
   };
 
-  const openWork = () => {
-    playClickSound();
-    createWindow('work', 'work', <WorkContent />);
-  };
-
-  const openLinks = () => {
-    playClickSound();
-    createWindow('links', 'links', <LinksContent isDarkMode={isDarkMode} />);
-  };
-
-  const openContact = () => {
-    playClickSound();
-    createWindow('contact', 'contact', <ContactContent />);
-  };
-
-  const openFaq = () => {
-    playClickSound();
-    createWindow('faq', 'faq', <FaqContent />);
-  };
+  const openAbout = () => createWindow('about', 'About Me', <AboutContent />);
+  const openWork = () => createWindow('work', 'My Work', <WorkContent />);
+  const openLinks = () => createWindow('links', 'Links', <LinksContent isDarkMode={isDarkMode} />);
+  const openContact = () => createWindow('contact', 'Contact', <ContactContent />);
+  const openFaq = () => createWindow('faq', 'FAQ', <FaqContent />);
 
   return (
-    <div className={`min-h-screen transition-all duration-500 relative overflow-hidden ${
-      isDarkMode 
-        ? 'bg-gradient-to-br from-slate-800 via-slate-700 to-slate-600' 
-        : 'bg-white'
-    }`}
-    style={{
-      fontFamily: 'AFRAH, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-    }}>
-      
+    <div className={cn(
+      "min-h-screen transition-colors duration-500 relative overflow-hidden font-sans",
+      isDarkMode ? "bg-slate-900 text-slate-100" : "bg-slate-50 text-slate-900"
+    )}>
+
       {/* Dark Mode Toggle */}
-      <div className="fixed top-4 right-4 z-50">
-        <button 
+      <div className="fixed top-4 right-4 z-50 flex gap-2">
+        <Button
+          variant="outline"
+          size="icon"
           onClick={() => {
             playClickSound();
             setIsDarkMode(!isDarkMode);
           }}
-          className={`w-10 h-10 rounded-full ${
-            isDarkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-white hover:bg-gray-100'
-          } border ${
-            isDarkMode ? 'border-slate-500' : 'border-gray-300'
-          } flex items-center justify-center shadow-lg transition-all`}
+          className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm"
         >
-          {isDarkMode ? <Moon size={20} className="text-slate-300" /> : <Sun size={20} />}
-        </button>
+          {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}
+        </Button>
       </div>
 
-      {/* Main Home Window - Always Visible */}
-      <div className="fixed inset-0 flex items-center justify-center p-4">
-        <div className={`${
-          isDarkMode ? 'bg-slate-800 border-slate-600' : 'bg-white border-gray-300'
-        } rounded-lg shadow-2xl border overflow-hidden w-[650px] max-w-[90vw] max-h-[90vh]`}>
-          
+      {/* Mobile Menu Button */}
+      {isMobile && (
+        <div className="fixed top-4 left-4 z-50">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm"
+          >
+            <Menu size={20} />
+          </Button>
+        </div>
+      )}
+
+      {/* Main Home Content */}
+      <div className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={cn(
+            "pointer-events-auto w-full max-w-2xl rounded-xl shadow-2xl border overflow-hidden backdrop-blur-sm",
+            isDarkMode ? "bg-slate-800/90 border-slate-700" : "bg-white/90 border-slate-200"
+          )}
+        >
           {/* Window Header */}
-          <div className={`h-8 ${
-            isDarkMode ? 'bg-slate-700' : 'bg-gray-600'
-          } flex items-center justify-between px-3`}>
-            <span className="text-white text-sm">home</span>
+          <div className={cn(
+            "h-10 flex items-center justify-between px-4 border-b",
+            isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100"
+          )}>
             <div className="flex space-x-2">
-              <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-              <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-              <div className="w-3 h-3 bg-red-400 rounded-full opacity-50"></div>
+              <div className="w-3 h-3 bg-slate-300 rounded-full hover:bg-red-400 transition-colors" />
+              <div className="w-3 h-3 bg-slate-300 rounded-full hover:bg-yellow-400 transition-colors" />
+              <div className="w-3 h-3 bg-slate-300 rounded-full hover:bg-green-400 transition-colors" />
             </div>
+            <span className="text-sm font-medium opacity-40 tracking-widest uppercase text-[10px]">portfolio.os</span>
           </div>
 
           {/* Window Content */}
-          <div className={`p-6 ${isDarkMode ? 'text-slate-200' : 'text-gray-800'}`}>
-            <div className="text-center space-y-4">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-light tracking-wide">
-                  hi! <span className="text-orange-500 font-medium">i'm swapnil</span>
-                </h1>
-                <p className={`text-sm font-light ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>
-                 web developer & music nerd
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-5 gap- 0 mt-6 justify-items-center px-2">
-                <NavigationBox 
-                  icon={<Info size={20} />}
-                  label="about"
-                  onClick={openAbout}
+          <div className="p-8 text-center space-y-8">
+            <div className="space-y-4">
+              <motion.h1
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="text-4xl md:text-5xl font-light tracking-tight"
+              >
+                Hi, I'm <span className="font-medium text-sky-600">Swapnil</span>
+              </motion.h1>
+              <motion.p
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.1 }}
+                className="text-lg text-slate-500 font-light"
+              >
+                Web Developer & Music Enthusiast
+              </motion.p>
+            </div>
+
+            <div className="grid grid-cols-3 md:grid-cols-5 gap-4 justify-items-center">
+              {[
+                { icon: <Info />, label: 'About', action: openAbout },
+                { icon: <Briefcase />, label: 'Work', action: openWork },
+                { icon: <Link />, label: 'Links', action: openLinks },
+                { icon: <HelpCircle />, label: 'FAQ', action: openFaq },
+                { icon: <Mail />, label: 'Contact', action: openContact },
+              ].map((item, index) => (
+                <NavigationBox
+                  key={item.label}
+                  {...item}
+                  delay={index * 0.1}
                   onHover={playHoverSound}
-                  isDarkMode={isDarkMode}
+                  onClick={() => {
+                    playClickSound();
+                    item.action();
+                  }}
                 />
-                <NavigationBox 
-                  icon={<Link size={20} />}
-                  label="links"
-                  onClick={openLinks}
-                  onHover={playHoverSound}
-                  isDarkMode={isDarkMode}
-                />
-                <NavigationBox 
-                  icon={<Briefcase size={20} />}
-                  label="work"
-                  onClick={openWork}
-                  onHover={playHoverSound}
-                  isDarkMode={isDarkMode}
-                />
-                <NavigationBox 
-                  icon={<HelpCircle size={20} />}
-                  label="faq"
-                  onClick={openFaq}
-                  onHover={playHoverSound}
-                  isDarkMode={isDarkMode}
-                />
-                <NavigationBox 
-                  icon={<Mail size={20} />}
-                  label="contact"
-                  onClick={openContact}
-                  onHover={playHoverSound}
-                  isDarkMode={isDarkMode}
-                />
-              </div>
+              ))}
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Windows */}
-      {windows.map(window => (
-        <DraggableWindow
-          key={window.id}
-          window={window}
-          onClose={() => closeWindow(window.id)}
-          onFocus={() => bringToFront(window.id)}
-          isDarkMode={isDarkMode}
-        />
-      ))}
+      <AnimatePresence>
+        {windows.map(window => (
+          <DraggableWindow
+            key={window.id}
+            window={window}
+            onClose={() => closeWindow(window.id)}
+            onFocus={() => bringToFront(window.id)}
+            onMaximize={() => toggleMaximize(window.id)}
+            isDarkMode={isDarkMode}
+            isMobile={isMobile}
+          />
+        ))}
+      </AnimatePresence>
 
-      {/* Social Links at Bottom */}
-      <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 flex space-x-3">
-        <SocialIcon 
-          icon={<Instagram size={16} />} 
-          bgColor={isDarkMode ? "bg-slate-600" : "bg-gray-500"} 
-          onClick={playClickSound}
-          onHover={playHoverSound}
-          href="https://www.instagram.com"
-        />
-        <SocialIcon 
-          icon={<Twitter size={16} />} 
-          bgColor={isDarkMode ? "bg-slate-600" : "bg-gray-500"} 
-          onClick={playClickSound}
-          onHover={playHoverSound}
-          href="https://x.com/home"
-        />
-        <SocialIcon 
-          icon={<Linkedin size={16} />} 
-          bgColor={isDarkMode ? "bg-slate-600" : "bg-gray-500"} 
-          onClick={playClickSound}
-          onHover={playHoverSound}
-          href="https://www.linkedin.com/in/swapnil-negi-46048725a/"
-        />
-        <SocialIcon 
-          icon={<Github size={16} />} 
-          bgColor={isDarkMode ? "bg-slate-600" : "bg-gray-500"} 
-          onClick={playClickSound}
-          onHover={playHoverSound}
-          href="https://github.com/SWAPN1L-code"
-        />
+      {/* Social Links */}
+      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-4 z-40">
+        {[
+          { icon: <Instagram size={20} />, href: "https://www.instagram.com" },
+          { icon: <Twitter size={20} />, href: "https://x.com/home" },
+          { icon: <Linkedin size={20} />, href: "https://www.linkedin.com/in/swapnil-negi-46048725a/" },
+          { icon: <Github size={20} />, href: "https://github.com/SWAPN1L-code" },
+        ].map((social, idx) => (
+          <motion.a
+            key={idx}
+            href={social.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            whileHover={{ scale: 1.1, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={playClickSound}
+            onMouseEnter={playHoverSound}
+            className={cn(
+              "p-3 rounded-full shadow-lg transition-colors",
+              isDarkMode ? "bg-slate-800 hover:bg-slate-700 text-white" : "bg-white hover:bg-slate-50 text-slate-800"
+            )}
+          >
+            {social.icon}
+          </motion.a>
+        ))}
       </div>
 
       {/* Footer */}
-      <div className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 text-xs ${
-        isDarkMode ? 'text-slate-400' : 'text-gray-600'
-      } font-light`}>
-        © 2025 Swapnil
+      <div className="fixed bottom-2 left-1/2 transform -translate-x-1/2 text-xs opacity-50">
+        © 2025 Swapnil Negi
       </div>
 
-      {/* Wave Component */}
       <WaveBackground isDarkMode={isDarkMode} />
     </div>
   );
 };
 
-const NavigationBox = ({ icon, label, onClick, onHover, isDarkMode }) => (
-  <button
+const NavigationBox = ({ icon, label, onClick, onHover, delay }) => (
+  <motion.button
+    initial={{ scale: 0, opacity: 0 }}
+    animate={{ scale: 1, opacity: 1 }}
+    transition={{ delay: 0.2 + delay, type: "spring" }}
+    whileHover={{ scale: 1.1 }}
+    whileTap={{ scale: 0.95 }}
     onClick={onClick}
     onMouseEnter={onHover}
-    className={`flex flex-col items-center space-y-1 p-4 rounded-lg transition-all hover:scale-105 ${
-      isDarkMode 
-        ? 'hover:bg-slate-700/50 border border-slate-600/30' 
-        : 'hover:bg-gray-100 border border-gray-200'
-    }`}
+    className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
   >
-    <div className={`${isDarkMode ? 'text-slate-400' : 'text-gray-600'}`}>
+    <div className="p-3 rounded-lg bg-slate-50 text-slate-600 group-hover:text-sky-600 group-hover:bg-sky-50 dark:bg-slate-800 dark:text-slate-400 dark:group-hover:text-sky-400 dark:group-hover:bg-sky-900/30 transition-colors">
       {icon}
     </div>
-    <span className="text-xs font-light">{label}</span>
-  </button>
+    <span className="text-xs font-medium text-slate-500 group-hover:text-slate-900 dark:text-slate-400 dark:group-hover:text-slate-200">{label}</span>
+  </motion.button>
 );
 
-const SocialIcon = ({ icon, bgColor, onClick, onHover, href }) => (
-  <a
-    href={href}
-    target="_blank"
-    rel="noopener noreferrer"
-    onClick={onClick}
-    onMouseEnter={onHover}
-    className={`w-10 h-10 ${bgColor} rounded-full flex items-center justify-center hover:scale-110 transition-all shadow-lg`}
-  >
-    <div className="text-white">{icon}</div>
-  </a>
-);
-
-const DraggableWindow = ({ window, onClose, onFocus, isDarkMode }) => {
+const DraggableWindow = ({ window, onClose, onFocus, onMaximize, isDarkMode, isMobile }) => {
   const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [position, setPosition] = useState({ x: window.x, y: window.y });
-
-  const handleMouseDown = (e) => {
-    if (e.target.classList.contains('window-header') || e.target.closest('.window-header')) {
-      setIsDragging(true);
-      setDragOffset({
-        x: e.clientX - position.x,
-        y: e.clientY - position.y
-      });
-      onFocus();
-    }
-  };
-
-  const handleMouseMove = (e) => {
-    if (isDragging) {
-      const newX = e.clientX - dragOffset.x;
-      const newY = e.clientY - dragOffset.y;
-      
-      setPosition({
-        x: newX,
-        y: Math.max(0, newY)
-      });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging]);
+  const dragControls = useDragControls();
 
   return (
-    <div
-      className={`fixed ${
-        isDarkMode ? 'bg-slate-800 border-slate-600' : 'bg-white border-gray-300'
-      } rounded-lg shadow-2xl border overflow-hidden select-none`}
+    <motion.div
+      initial={{ scale: 0.9, opacity: 0, y: 20 }}
+      animate={{ scale: 1, opacity: 1, y: 0 }}
+      exit={{ scale: 0.9, opacity: 0, y: 20 }}
+      drag={!window.isMaximized && !isMobile}
+      dragMomentum={false}
+      dragListener={false}
+      dragControls={dragControls}
+      onDragStart={() => setIsDragging(true)}
+      onDragEnd={() => setIsDragging(false)}
+      className={cn(
+        "fixed rounded-lg shadow-2xl border overflow-hidden flex flex-col",
+        isDarkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200",
+        window.isMaximized || isMobile ? "inset-0 rounded-none m-0" : ""
+      )}
       style={{
-        left: position.x,
-        top: position.y,
-        width: window.width,
-        height: window.height,
-        zIndex: window.zIndex
+        left: window.isMaximized || isMobile ? 0 : window.x,
+        top: window.isMaximized || isMobile ? 0 : window.y,
+        width: window.isMaximized || isMobile ? '100%' : window.width,
+        height: window.isMaximized || isMobile ? '100%' : window.height,
+        zIndex: window.zIndex,
+        position: window.isMaximized || isMobile ? 'fixed' : 'absolute'
       }}
       onClick={onFocus}
     >
+      {/* Window Header */}
       <div
-        className={`window-header h-8 ${
-          isDarkMode ? 'bg-slate-700' : 'bg-gray-600'
-        } flex items-center justify-between px-3 cursor-move`}
-        onMouseDown={handleMouseDown}
+        className={cn(
+          "h-10 flex items-center justify-between px-4 border-b select-none",
+          isDarkMode ? "bg-slate-800 border-slate-700" : "bg-slate-100 border-slate-200",
+          !window.isMaximized && !isMobile ? "cursor-move" : ""
+        )}
+        onPointerDown={(e) => {
+          if (!window.isMaximized && !isMobile) {
+            dragControls.current?.start(e);
+            onFocus();
+          }
+        }}
       >
-        <span className="text-white text-sm font-light">{window.title}</span>
-        <div className="flex space-x-2">
-          <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-          <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+        <span className="text-sm font-medium">{window.title}</span>
+        <div className="flex items-center gap-2">
+          {!isMobile && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onMaximize(); }}
+              className="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded"
+            >
+              {window.isMaximized ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            </button>
+          )}
           <button
-            onClick={onClose}
-            className="w-3 h-3 bg-red-400 rounded-full hover:bg-red-500 flex items-center justify-center"
+            onClick={(e) => { e.stopPropagation(); onClose(); }}
+            className="p-1 hover:bg-red-500 hover:text-white rounded transition-colors"
           >
-            <X size={6} className="text-red-800" />
+            <X size={14} />
           </button>
         </div>
       </div>
 
-      <div className={`p-6 h-full overflow-auto ${
-        isDarkMode ? 'text-slate-200' : 'text-gray-800'
-      }`}>
+      {/* Window Content */}
+      <div className="flex-1 overflow-auto p-6">
         {window.content}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
-const WaveBackground = ({ isDarkMode }) => {
-  return (
-    <div className="fixed bottom-0 left-0 right-0 pointer-events-none">
-      <svg
-        className="w-full h-32"
-        viewBox="0 0 1200 120"
-        preserveAspectRatio="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M0,60 C300,120 900,0 1200,60 L1200,120 L0,120 Z"
-          fill={isDarkMode ? 'rgba(148, 163, 184, 0.1)' : 'rgba(135, 206, 235, 0.3)'}
-          className="animate-pulse"
-        />
-        <path
-          d="M0,80 C300,40 900,100 1200,80 L1200,120 L0,120 Z"
-          fill={isDarkMode ? 'rgba(100, 116, 139, 0.1)' : 'rgba(135, 206, 235, 0.2)'}
-          className="animate-pulse"
-          style={{ animationDelay: '0.5s' }}
-        />
-      </svg>
-    </div>
-  );
-};
-
-const ImageItem = ({ src, alt, description }) => (
-  <div className="group relative">
-    <div className="bg-gradient-to-br from-pink-400 to-purple-500 w-20 h-20 rounded-lg mx-auto mb-2 flex items-center justify-center transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-lg group-hover:shadow-xl">
-      <Image size={24} className="text-white" />
-    </div>
-    <p className="text-xs text-center font-light opacity-60 group-hover:opacity-100 transition-opacity">
-      {description}
-    </p>
-    <div className="absolute -inset-2 bg-gradient-to-r from-pink-400/20 to-purple-500/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity blur-sm -z-10"></div>
+const WaveBackground = ({ isDarkMode }) => (
+  <div className="fixed bottom-0 left-0 right-0 pointer-events-none z-0">
+    <svg className="w-full h-32 md:h-48" viewBox="0 0 1440 320" preserveAspectRatio="none">
+      <path
+        fill={isDarkMode ? "rgba(14, 165, 233, 0.05)" : "rgba(14, 165, 233, 0.05)"}
+        fillOpacity="1"
+        d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,160C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+      />
+    </svg>
   </div>
 );
 
+// Content Components
 const AboutContent = () => (
-  <div className="space-y-6">
-    <div className="flex items-start space-x-4">
-     <img
-  src={`${process.env.PUBLIC_URL}/swapnil.jpg`}
-  alt="Swapnil"
-  className="w-16 h-16  rounded-full"
-/>
-
-      <div>
-        <h2 className="text-xl font-light text-orange-500 mb-1">Swapnil Negi</h2>
-        <p className="text-gray-500 text-sm mb-1"> Web Developer</p>
-        <p className="text-gray-500 text-sm">Music Enthousiast, Traveler</p>
+  <div className="space-y-8 max-w-2xl mx-auto">
+    <div className="flex flex-col md:flex-row items-center gap-6">
+      <img
+        src={`${process.env.PUBLIC_URL}/swapnil.jpg`}
+        alt="Swapnil"
+        className="w-32 h-32 rounded-full object-cover border-4 border-slate-100 dark:border-slate-800 shadow-xl"
+      />
+      <div className="text-center md:text-left">
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Swapnil Negi</h2>
+        <p className="text-sky-600 font-medium">Web Developer • Music Enthusiast • Traveler</p>
       </div>
     </div>
-    
-    <div className="space-y-6 text-sm font-light">
-      <div className="space-y-3">
-        <p>Hi, I'm Swapnil — a passionate and creative web developer who loves turning ideas into sleek, user-friendly websites.</p>
-        <div className="flex justify-center space-x-4">
-         
-        </div>
-      </div>
-      
-      <div className="space-y-3">
-        <p>With a strong foundation in HTML, CSS, JavaScript, and modern frameworks, I build responsive designs and interactive experiences.</p>
-        <div className="flex justify-center space-x-4">
-         
-        </div>
-      </div>
-      
-      <div className="space-y-3">
-        <p>Whether it's a  startup landing page, or full-stack project, I approach each challenge with curiosity and a drive to learn.</p>
-        <div className="flex justify-center space-x-4">
-          
-        </div>
-      </div>
-      
-     
-<div className="space-y-3">
-  <p>
-    If passion had a Premier League table, I’d be sitting top of the league with football—blue side of Manchester, obviously. I don’t just watch Man City, I overanalyze Pep’s tactics like it’s a PhD thesis.
-  </p>
-  <div className="flex justify-center space-x-4">
-    <img
-      src={`${process.env.PUBLIC_URL}/football1.png`}
-      alt="football1"
-      className="w-20 h-20"
-    />
-    <img
-      src={`${process.env.PUBLIC_URL}/football2.png`}
-      alt="football2"
-      className="w-20 h-20"
-    />
-    <img
-      src={`${process.env.PUBLIC_URL}/football3.png`}
-      alt="football3"
-      className="w-20 h-20"
-    />
-  </div>
-</div>
 
-<div className="space-y-3">
-  <p>
-    When life gets noisy, Kanye and Frank Ocean run my soundtrack. One gives me stadium-level confidence, the other makes me stare at the ceiling and question the universe—balance is key.
-  </p>
-  <div className="flex justify-center space-x-4">
-    <img
-      src={`${process.env.PUBLIC_URL}/kanye.png`}
-      alt="kanye"
-      className="w-20 h-20"
-    />
-    <img
-      src={`${process.env.PUBLIC_URL}/frank.png`}
-      alt="frank"
-      className="w-20 h-20"
-    />
-  </div>
-</div>
+    <div className="space-y-6 text-lg leading-relaxed opacity-90">
+      <p>
+        Hi, I'm Swapnil — a passionate and creative web developer who loves turning ideas into sleek, user-friendly websites.
+      </p>
+      <p>
+        With a strong foundation in HTML, CSS, JavaScript, and modern frameworks, I build responsive designs and interactive experiences.
+      </p>
 
-<div className="space-y-3">
-  <p>
-    And when I’m not yelling ‘GOAAALLL,’ I’m chasing actual goals—like climbing at least 10 mountains before 2030. Because if Haaland can score 50 in a season, the least I can do is summit a few peaks.
-  </p>
-  <div className="flex justify-center space-x-4">
-    <img
-      src={`${process.env.PUBLIC_URL}/mountain1.png`}
-      alt="mountain1"
-      className="w-20 h-20"
-    />
-    <img
-      src={`${process.env.PUBLIC_URL}/mountain2.png`}
-      alt="mountain2"
-      className="w-20 h-20"
-    />
-    <img
-      src={`${process.env.PUBLIC_URL}/mountain3.png`}
-      alt="mountain3"
-      className="w-20 h-20"
-    />
-    <img
-      src={`${process.env.PUBLIC_URL}/mountain4.png`}
-      alt="mountain4"
-      className="w-20 h-16"
-    />
-  </div>
-</div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            ⚽ Football & Tactics
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">
+            If passion had a Premier League table, I’d be sitting top of the league with football—blue side of Manchester, obviously. I don’t just watch Man City, I overanalyze Pep’s tactics like it’s a PhD thesis.
+          </p>
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {['football1.png', 'football2.png', 'football3.png'].map((img, i) => (
+              <img key={i} src={`${process.env.PUBLIC_URL}/${img}`} alt="football" className="w-16 h-16 object-contain" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            🎵 Music
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">
+            When life gets noisy, Kanye and Frank Ocean run my soundtrack. One gives me stadium-level confidence, the other makes me stare at the ceiling and question the universe—balance is key.
+          </p>
+          <div className="flex gap-4">
+            {['kanye.png', 'frank.png'].map((img, i) => (
+              <img key={i} src={`${process.env.PUBLIC_URL}/${img}`} alt="music" className="w-16 h-16 object-contain" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-      
-      <p className="text-orange-500 font-medium text-center">So yeah, football, music, and hiking—they're not hobbies, they're my holy trinity.</p>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            🏔️ Hiking
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">
+            And when I’m not yelling ‘GOAAALLL,’ I’m chasing actual goals—like climbing at least 10 mountains before 2030.
+          </p>
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {['mountain1.png', 'mountain2.png', 'mountain3.png', 'mountain4.png'].map((img, i) => (
+              <img key={i} src={`${process.env.PUBLIC_URL}/${img}`} alt="mountain" className="w-16 h-16 object-contain" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   </div>
 );
 
 const WorkContent = () => (
-  <div className="space-y-4">
-    <div >
-      <p className="text-sm mb-1">Available for exciting projects!</p>
-      <p className="text-xs text-gray-600">Web development and full-stack</p>
+  <div className="space-y-6 max-w-3xl mx-auto">
+    <div className="text-center mb-8">
+      <h2 className="text-2xl font-bold mb-2">My Projects</h2>
+      <p className="text-muted-foreground">A collection of my recent work</p>
     </div>
-    
-    <div className="space-y-4">
-      <div className="border-l-4 border-orange-500 pl-3">
-        <h3 className="font-medium mb-2 text-sm text-orange-500">Featured Project</h3>
-        <div className="flex items-center justify-between">
-          <h4 className="font-medium text-base mb-1">DailyGitHack</h4>
-          <a
-            href="https://github.com/SWAPN1L-code/dailygithack"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center space-x-1 bg-gray-800 text-white px-3 py-1 rounded-lg hover:bg-gray-700 transition-all text-xs"
-          >
-            <Github size={12} />
-            <span>GitHub</span>
-          </a>
-        </div>
-        <p className="text-xs font-light text-gray-600 mb-2">
-          A SwiftUI app that helps you keep your GitHub streak alive by pushing daily commits with style 
-        </p>
-        <p className="text-xs font-light">
-          Generate commit messages, track contribution stats, and push logs directly to your GitHub repo using the GitHub REST API.
-        </p>
-        <p> __________________</p>
-         <div className="flex items-center justify-between">
-          <h4 className="font-medium text-base mb-1">Dashboard website</h4>
-          <a
-            href="https://github.com/SWAPN1L-code/dashboard-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center space-x-1 bg-gray-800 text-white px-3 py-1 rounded-lg hover:bg-gray-700 transition-all text-xs"
-          >
-            <Github size={12} />
-            <span>GitHub</span>
-          </a>
-        </div>
-        <p className="text-xs font-light text-gray-600 mb-2">
-I built a customizable Dashboard using HTML, CSS, and JavaScript that brings together widgets like weather, calendar, clock, and task manager in one clean interface.
-        </p>
-        <p className="text-xs font-light">
-         It's a simple yet interactive project that shows how front-end code can make everyday tools visually appealing and functional.
-        </p>
-      </div>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <h3 className="font-medium mb-2 text-sm">SKILLS</h3>
-          <div className="space-y-1.5 text-xs font-light">
-            <div>HTML/CSS</div>
-            <div>JavaScript</div>
-            <div>React</div>
-            <div>SwiftUI</div>
-            <div>Node.js</div>
-            <div>Git/GitHub</div>
-            <div>Tailwind</div>
+
+    <div className="grid gap-6">
+      <Card className="overflow-hidden group hover:shadow-lg transition-shadow border-slate-200 dark:border-slate-800">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-slate-800 dark:text-slate-100 group-hover:text-sky-600 transition-colors">DailyGitHack</CardTitle>
+            <Button size="sm" variant="outline" asChild className="hover:bg-sky-50 hover:text-sky-600 border-slate-200">
+              <a href="https://github.com/SWAPN1L-code/dailygithack" target="_blank" rel="noopener noreferrer">
+                <Github className="mr-2 h-4 w-4" /> GitHub
+              </a>
+            </Button>
           </div>
-        </div>
-        
-        <div>
-          <h3 className="font-medium mb-2 text-sm">PLATFORMS</h3>
-          <div className="space-y-1 text-xs font-light">
-            <div>GitHub</div>
-            <div>LeetCode</div>
-            <div>LinkedIn</div>
-            <div>Web Development</div>
-            <div>Mobile Apps</div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground mb-4">
+            A SwiftUI app that helps you keep your GitHub streak alive by pushing daily commits with style.
+            Generate commit messages, track contribution stats, and push logs directly to your GitHub repo using the GitHub REST API.
+          </p>
+          <div className="flex gap-2 flex-wrap">
+            {['SwiftUI', 'GitHub API', 'iOS'].map(tag => (
+              <span key={tag} className="px-2 py-1 bg-secondary rounded-md text-xs font-medium">
+                {tag}
+              </span>
+            ))}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
+
+      <Card className="overflow-hidden group hover:shadow-lg transition-shadow border-slate-200 dark:border-slate-800">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-slate-800 dark:text-slate-100 group-hover:text-sky-600 transition-colors">Dashboard Website</CardTitle>
+            <Button size="sm" variant="outline" asChild className="hover:bg-sky-50 hover:text-sky-600 border-slate-200">
+              <a href="https://github.com/SWAPN1L-code/dashboard-app" target="_blank" rel="noopener noreferrer">
+                <Github className="mr-2 h-4 w-4" /> GitHub
+              </a>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground mb-4">
+            I built a customizable Dashboard using HTML, CSS, and JavaScript that brings together widgets like weather, calendar, clock, and task manager in one clean interface.
+          </p>
+          <div className="flex gap-2 flex-wrap">
+            {['HTML', 'CSS', 'JavaScript', 'Widgets'].map(tag => (
+              <span key={tag} className="px-2 py-1 bg-secondary rounded-md text-xs font-medium">
+                {tag}
+              </span>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground">Skills</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {['HTML/CSS', 'JavaScript', 'React', 'SwiftUI', 'Node.js', 'Git/GitHub', 'Tailwind'].map(skill => (
+              <span key={skill} className="px-3 py-1 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 rounded-full text-sm font-medium">
+                {skill}
+              </span>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground">Platforms</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {['GitHub', 'LeetCode', 'LinkedIn', 'Vercel', 'XCode'].map(platform => (
+              <span key={platform} className="px-3 py-1 bg-sky-50 text-sky-600 dark:bg-sky-900/20 dark:text-sky-300 rounded-full text-sm font-medium">
+                {platform}
+              </span>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   </div>
 );
 
-const LinksContent = ({ isDarkMode }) => (
-  <div className="space-y-4">
-    <div className="grid grid-cols-2 gap-3">
-      <LinkCard 
-        icon={<Instagram size={20} />} 
-        label="instagram" 
-        href="https://www.instagram.com"
-        isDarkMode={isDarkMode}
-      />
-      <LinkCard 
-        icon={<Twitter size={20} />} 
-        label="x" 
-        href="https://x.com/home"
-        isDarkMode={isDarkMode}
-      />
-      <LinkCard 
-        icon={<Linkedin size={20} />} 
-        label="linkedin" 
-        href="https://www.linkedin.com/in/swapnil-negi-46048725a/"
-        isDarkMode={isDarkMode}
-      />
-      <LinkCard 
-        icon={<Briefcase size={20} />} 
-        label="leetcode" 
-        href="https://leetcode.com/u/30NK3T28Ag/"
-        isDarkMode={isDarkMode}
-      />
-    </div>
-    
-    <div className="border-t pt-3">
-      <LinkCard 
-        icon={<Github size={20} />} 
-        label="github" 
-        href="https://github.com/SWAPN1L-code"
-        fullWidth={true}
-        isDarkMode={isDarkMode}
-      />
-    </div>
+const LinksContent = () => (
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+    {[
+      { icon: <Instagram size={24} />, label: "Instagram", href: "https://www.instagram.com", color: "text-pink-500" },
+      { icon: <Twitter size={24} />, label: "X (Twitter)", href: "https://x.com/home", color: "text-blue-400" },
+      { icon: <Linkedin size={24} />, label: "LinkedIn", href: "https://www.linkedin.com/in/swapnil-negi-46048725a/", color: "text-blue-600" },
+      { icon: <Briefcase size={24} />, label: "LeetCode", href: "https://leetcode.com/u/30NK3T28Ag/", color: "text-yellow-500" },
+      { icon: <Github size={24} />, label: "GitHub", href: "https://github.com/SWAPN1L-code", color: "text-gray-800 dark:text-white", full: true },
+    ].map((link, i) => (
+      <a
+        key={link.label}
+        href={link.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={cn(
+          "flex items-center gap-4 p-4 rounded-xl border bg-card hover:bg-accent transition-all hover:scale-105",
+          link.full ? "sm:col-span-2" : ""
+        )}
+      >
+        <div className={cn("p-2 rounded-full bg-background shadow-sm", link.color)}>
+          {link.icon}
+        </div>
+        <span className="font-medium">{link.label}</span>
+      </a>
+    ))}
   </div>
-);
-
-const LinkCard = ({ icon, label, href, fullWidth = false, isDarkMode }) => (
-  <a
-    href={href}
-    target="_blank"
-    rel="noopener noreferrer"
-    className={`flex flex-col items-center space-y-2 p-3 rounded-lg transition-all cursor-pointer ${
-      fullWidth ? 'col-span-2' : ''
-    } ${
-      isDarkMode 
-        ? 'hover:bg-slate-700/50 text-slate-300' 
-        : 'hover:bg-gray-50 text-gray-700'
-    }`}
-  >
-    <div className={isDarkMode ? 'text-slate-400' : 'text-gray-600'}>{icon}</div>
-    <span className="text-sm font-light">{label}</span>
-  </a>
 );
 
 const ContactContent = () => (
-  <div className="space-y-4 text-center">
-    <Mail size={48} className="mx-auto text-blue-400" />
+  <div className="max-w-md mx-auto text-center space-y-8">
+    <div className="w-24 h-24 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto">
+      <Mail size={48} className="text-blue-500" />
+    </div>
+
     <div>
-      <h3 className="text-lg font-light mb-2">Let's Connect!</h3>
-      <p className="text-gray-500 text-sm mb-4 font-light">want to contact me?</p>
-      
-      <div className="space-y-3">
-        <div className="bg-gray-100 p-3 rounded-lg">
-          <p className="text-sm font-medium text-gray-700">Email</p>
-          <p className="text-sm text-orange-500">swapnilnegi06@gmail.com</p>
+      <h2 className="text-2xl font-bold mb-2">Get in Touch</h2>
+      <p className="text-muted-foreground">
+        Have a project in mind or just want to say hi? I'd love to hear from you.
+      </p>
+    </div>
+
+    <div className="space-y-4">
+      <Card className="p-4 flex items-center gap-4 hover:border-sky-200 transition-colors">
+        <div className="p-3 bg-sky-50 dark:bg-sky-900/20 rounded-full text-sky-600">
+          <Mail size={20} />
         </div>
-        
-        <div className="bg-gray-100 p-3 rounded-lg">
-          <p className="text-sm font-medium text-gray-700">Phone</p>
-          <p className="text-sm text-orange-500">+91 9149177159</p>
+        <div className="text-left">
+          <p className="text-sm font-medium text-muted-foreground">Email</p>
+          <p className="font-medium">swapnilnegi06@gmail.com</p>
         </div>
-        
-        <div className="flex gap-2 justify-center">
-          <a
-            href="mailto:swapnilnegi06@gmail.com"
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-all text-sm font-light"
-          >
-            Send Email
-          </a>
-          <a
-            href="tel:+919149177159"
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-all text-sm font-light"
-          >
-            Call Now
-          </a>
+      </Card>
+
+      <Card className="p-4 flex items-center gap-4 hover:border-sky-200 transition-colors">
+        <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
+          <Briefcase size={20} />
         </div>
-      </div>
+        <div className="text-left">
+          <p className="text-sm font-medium text-muted-foreground">Phone</p>
+          <p className="font-medium">+91 9149177159</p>
+        </div>
+      </Card>
+    </div>
+
+    <div className="flex gap-4 justify-center pt-4">
+      <Button asChild className="flex-1">
+        <a href="mailto:swapnilnegi06@gmail.com">Send Email</a>
+      </Button>
+      <Button variant="outline" asChild className="flex-1">
+        <a href="tel:+919149177159">Call Now</a>
+      </Button>
     </div>
   </div>
 );
 
 const FaqContent = () => (
-  <div className="space-y-4">
-    <div className="space-y-3 text-sm">
-      <div>
-        <h3 className="font-medium text-orange-500 mb-1">What technologies do you use?</h3>
-        <p className="font-light">HTML, CSS, JavaScript, React, SwiftUI, Node.js, and more!</p>
-      </div>
-      
-      <div>
-        <h3 className="font-medium text-orange-500 mb-1">Are you available for freelance work?</h3>
-        <p className="font-light">Yes! I'm available for exciting web development projects.</p>
-      </div>
-      
-      <div>
-        <h3 className="font-medium text-orange-500 mb-1">How long have you been coding?</h3>
-        <p className="font-light">I've been passionate about coding for several years, constantly learning new technologies.</p>
-      </div>
-      
-      <div>
-        <h3 className="font-medium text-orange-500 mb-1">What's your development process?</h3>
-        <p className="font-light">I focus on understanding requirements, designing solutions, and implementing with clean, maintainable code.</p>
-      </div>
-    </div>
+  <div className="space-y-4 max-w-2xl mx-auto">
+    {[
+      { q: "What technologies do you use?", a: "I primarily work with React, Node.js, and Tailwind CSS, but I'm also experienced with SwiftUI for iOS development." },
+      { q: "Are you available for freelance work?", a: "Yes! I'm currently open to new opportunities and interesting projects." },
+      { q: "How long have you been coding?", a: "I've been coding for several years, constantly learning and adapting to new technologies." },
+      { q: "What's your development process?", a: "I focus on user-centric design, clean code, and performance optimization." },
+    ].map((item, i) => (
+      <Card key={i} className="hover:border-sky-200 transition-colors">
+        <CardHeader>
+          <CardTitle className="text-base text-sky-600">{item.q}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">{item.a}</p>
+        </CardContent>
+      </Card>
+    ))}
   </div>
 );
 
