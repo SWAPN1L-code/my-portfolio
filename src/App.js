@@ -2,18 +2,43 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Info, Link, Briefcase, HelpCircle, Mail, Twitter, Instagram, Github, Linkedin, Moon, Sun, Image, Menu, Maximize2, Minimize2 } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { Button } from './components/ui/button';
+import { GlassButton } from './components/ui/glass-button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import { cn } from './lib/utils';
+import GhostCursor from './components/ui/GhostCursor';
+import LaserFlow from './components/ui/LaserFlow';
+import { Play, ExternalLink } from 'lucide-react';
+import AnimatedList from './components/ui/AnimatedList';
 
 const Y2KDesktopPortfolio = () => {
   const [windows, setWindows] = useState([]);
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('theme');
-    return saved ? JSON.parse(saved) : false;
+    try {
+      const saved = localStorage.getItem('theme');
+      if (saved === null) return false;
+      return JSON.parse(saved) === true;
+    } catch (e) {
+      return false;
+    }
   });
   const [zIndexCounter, setZIndexCounter] = useState(1000);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const revealImgRef = useRef(null);
+
+  const handleRevealMove = (e) => {
+    if (!revealImgRef.current) return;
+    const x = e.clientX;
+    const y = e.clientY;
+    revealImgRef.current.style.setProperty('--mx', `${x}px`);
+    revealImgRef.current.style.setProperty('--my', `${y}px`);
+  };
+
+  const handleRevealLeave = () => {
+    if (!revealImgRef.current) return;
+    revealImgRef.current.style.setProperty('--mx', '-9999px');
+    revealImgRef.current.style.setProperty('--my', '-9999px');
+  };
 
   // Handle resize
   useEffect(() => {
@@ -104,16 +129,64 @@ const Y2KDesktopPortfolio = () => {
   };
 
   const openAbout = () => createWindow('about', 'About Me', <AboutContent />);
-  const openWork = () => createWindow('work', 'My Work', <WorkContent />);
+  const openWork = () => createWindow('work', 'My Work', <WorkContent isDarkMode={isDarkMode} />);
   const openLinks = () => createWindow('links', 'Links', <LinksContent isDarkMode={isDarkMode} />);
-  const openContact = () => createWindow('contact', 'Contact', <ContactContent />);
+  const openContact = () => createWindow('contact', 'Contact', <ContactContent isDarkMode={isDarkMode} />);
   const openFaq = () => createWindow('faq', 'FAQ', <FaqContent />);
 
   return (
-    <div className={cn(
-      "min-h-screen transition-colors duration-500 relative overflow-hidden font-sans",
-      isDarkMode ? "bg-slate-900 text-slate-100" : "bg-slate-50 text-slate-900"
-    )}>
+    <div
+      className={cn(
+        "min-h-screen transition-colors duration-500 relative overflow-hidden font-sans",
+        isDarkMode ? "text-slate-100" : "text-slate-900"
+      )}
+      onMouseMove={handleRevealMove}
+      onMouseLeave={handleRevealLeave}
+    >
+      {/* Background Base Layer */}
+      <div className="fixed inset-0 z-[-2] pointer-events-none" style={{ backgroundColor: isDarkMode ? '#060010' : '#f8faff' }} />
+
+      <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
+        <LaserFlow
+          color={isDarkMode ? "#ffffff" : "#000000"}
+          backgroundColor={isDarkMode ? "#040008" : "#ffffff"}
+          fogIntensity={isDarkMode ? 0.38 : 0.18}
+          horizontalBeamOffset={0.0}
+          verticalBeamOffset={-0.5}
+          horizontalSizing={3.8}
+          verticalSizing={2.8}
+        />
+
+        {/* Reveal Image Effect */}
+        <div
+          ref={revealImgRef}
+          className="absolute inset-0 pointer-events-none opacity-40 transition-opacity duration-500"
+          style={{
+            zIndex: 1,
+            mixBlendMode: isDarkMode ? 'screen' : 'multiply',
+            '--mx': '-9999px',
+            '--my': '-9999px',
+            filter: isDarkMode ? 'grayscale(100%)' : 'grayscale(100%) contrast(1.2)',
+            backgroundImage: `url('https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80\u0026w=2070\u0026auto=format\u0026fit=crop')`,
+            backgroundSize: 'cover',
+            WebkitMaskImage: 'radial-gradient(circle at var(--mx) var(--my), rgba(255,255,255,1) 0px, rgba(255,255,255,0.95) 80px, rgba(255,255,255,0.6) 160px, rgba(255,255,255,0.25) 240px, rgba(255,255,255,0) 320px)',
+            maskImage: 'radial-gradient(circle at var(--mx) var(--my), rgba(255,255,255,1) 0px, rgba(255,255,255,0.95) 80px, rgba(255,255,255,0.6) 160px, rgba(255,255,255,0.25) 240px, rgba(255,255,255,0) 320px)',
+            WebkitMaskRepeat: 'no-repeat',
+            maskRepeat: 'no-repeat'
+          }}
+        />
+      </div>
+      {/* Dynamic Background Blobs for Glass POP */}
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className={cn(
+          "absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full blur-[120px] opacity-10 animate-pulse",
+          isDarkMode ? "bg-white" : "bg-slate-300"
+        )} />
+        <div className={cn(
+          "absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full blur-[120px] opacity-10 animate-pulse delay-1000",
+          isDarkMode ? "bg-slate-500" : "bg-slate-200"
+        )} />
+      </div>
 
       {/* Dark Mode Toggle */}
       <div className="fixed top-4 right-4 z-50 flex gap-2">
@@ -124,11 +197,19 @@ const Y2KDesktopPortfolio = () => {
             playClickSound();
             setIsDarkMode(!isDarkMode);
           }}
-          className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm"
+          className="rounded-full shadow-lg glass-morphism hover:bg-white/20 transition-all"
         >
-          {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}
+          {isDarkMode ? <Moon size={20} className="text-blue-400" /> : <Sun size={20} className="text-yellow-500" />}
         </Button>
       </div>
+
+      <GhostCursor
+        color={isDarkMode ? "#ffffff" : "#000000"}
+        bloomStrength={isDarkMode ? 0.8 : 0.3}
+        trailLength={30}
+      />
+
+      {/* LaserFlow and Reveal Effect now integrated at the root level */}
 
       {/* Mobile Menu Button */}
       {isMobile && (
@@ -137,7 +218,7 @@ const Y2KDesktopPortfolio = () => {
             variant="outline"
             size="icon"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm"
+            className="rounded-full shadow-lg glass-morphism hover:bg-white/20 transition-all"
           >
             <Menu size={20} />
           </Button>
@@ -145,26 +226,27 @@ const Y2KDesktopPortfolio = () => {
       )}
 
       {/* Main Home Content */}
-      <div className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
+      <div className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none z-20">
         <motion.div
+          drag
+          dragMomentum={false}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className={cn(
-            "pointer-events-auto w-full max-w-2xl rounded-xl shadow-2xl border overflow-hidden backdrop-blur-sm",
-            isDarkMode ? "bg-slate-800/90 border-slate-700" : "bg-white/90 border-slate-200"
+            "pointer-events-auto w-full max-w-2xl rounded-2xl shadow-2xl border overflow-hidden cursor-grab active:cursor-grabbing",
+            isDarkMode ? "glass-dark" : "glass"
           )}
         >
           {/* Window Header */}
           <div className={cn(
-            "h-10 flex items-center justify-between px-4 border-b",
-            isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100"
+            "h-12 flex items-center justify-between px-6 border-b",
+            isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/5"
           )}>
             <div className="flex space-x-2">
               <div className="w-3 h-3 bg-slate-300 rounded-full hover:bg-red-400 transition-colors" />
               <div className="w-3 h-3 bg-slate-300 rounded-full hover:bg-yellow-400 transition-colors" />
               <div className="w-3 h-3 bg-slate-300 rounded-full hover:bg-green-400 transition-colors" />
             </div>
-            <span className="text-sm font-medium opacity-40 tracking-widest uppercase text-[10px]">portfolio.os</span>
           </div>
 
           {/* Window Content */}
@@ -173,9 +255,9 @@ const Y2KDesktopPortfolio = () => {
               <motion.h1
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                className="text-4xl md:text-5xl font-light tracking-tight"
+                className="text-4xl md:text-5xl font-extralight tracking-tight"
               >
-                Hi, I'm <span className="font-medium text-sky-600">Swapnil</span>
+                Hi, I'm <span className="font-medium text-blue-500 drop-shadow-sm">Swapnil</span>
               </motion.h1>
               <motion.p
                 initial={{ y: 20, opacity: 0 }}
@@ -226,39 +308,54 @@ const Y2KDesktopPortfolio = () => {
         ))}
       </AnimatePresence>
 
-      {/* Social Links */}
-      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-4 z-40">
-        {[
-          { icon: <Instagram size={20} />, href: "https://www.instagram.com" },
-          { icon: <Twitter size={20} />, href: "https://x.com/home" },
-          { icon: <Linkedin size={20} />, href: "https://www.linkedin.com/in/swapnil-negi-46048725a/" },
-          { icon: <Github size={20} />, href: "https://github.com/SWAPN1L-code" },
-        ].map((social, idx) => (
-          <motion.a
-            key={idx}
-            href={social.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            whileHover={{ scale: 1.1, y: -2 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={playClickSound}
-            onMouseEnter={playHoverSound}
-            className={cn(
-              "p-3 rounded-full shadow-lg transition-colors",
-              isDarkMode ? "bg-slate-800 hover:bg-slate-700 text-white" : "bg-white hover:bg-slate-50 text-slate-800"
-            )}
-          >
-            {social.icon}
-          </motion.a>
-        ))}
-      </div>
 
       {/* Footer */}
-      <div className="fixed bottom-2 left-1/2 transform -translate-x-1/2 text-xs opacity-50">
-        © 2025 Swapnil Negi
+      <div className="fixed bottom-0 left-0 right-0 pb-3 pt-4 z-40">
+        <div className="flex flex-col items-center gap-3">
+          {/* Social Icons */}
+          <div className="flex items-center gap-3">
+            {[
+              { icon: <Instagram size={16} />, href: "https://www.instagram.com", label: "Instagram" },
+              { icon: <Twitter size={16} />, href: "https://x.com/home", label: "Twitter" },
+              { icon: <Linkedin size={16} />, href: "https://www.linkedin.com/in/swapnil-negi-46048725a/", label: "LinkedIn" },
+              { icon: <Github size={16} />, href: "https://github.com/SWAPN1L-code", label: "GitHub" },
+            ].map((social, idx) => (
+              <motion.div
+                key={idx}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <a
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.label}
+                  onClick={playClickSound}
+                  onMouseEnter={playHoverSound}
+                  className={cn(
+                    "flex items-center justify-center w-11 h-11 rounded-full transition-all duration-300",
+                    isDarkMode
+                      ? "bg-slate-700/60 hover:bg-slate-600/70 text-white/80 hover:text-white border border-slate-600/40"
+                      : "bg-slate-400/60 hover:bg-slate-500/70 text-white hover:text-white border border-slate-300/40",
+                    "backdrop-blur-md shadow-md hover:shadow-lg"
+                  )}
+                >
+                  {social.icon}
+                </a>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Copyright Text */}
+          <p className={cn(
+            "text-xs font-medium tracking-wide",
+            isDarkMode ? "text-slate-400/70" : "text-slate-500/70"
+          )}>
+            © 2025 Swapnil
+          </p>
+        </div>
       </div>
 
-      <WaveBackground isDarkMode={isDarkMode} />
     </div>
   );
 };
@@ -272,12 +369,12 @@ const NavigationBox = ({ icon, label, onClick, onHover, delay }) => (
     whileTap={{ scale: 0.95 }}
     onClick={onClick}
     onMouseEnter={onHover}
-    className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
+    className="flex flex-col items-center gap-2 p-4 rounded-2xl hover:bg-white/10 dark:hover:bg-black/10 transition-all group scale-100 hover:scale-105 active:scale-95"
   >
-    <div className="p-3 rounded-lg bg-slate-50 text-slate-600 group-hover:text-sky-600 group-hover:bg-sky-50 dark:bg-slate-800 dark:text-slate-400 dark:group-hover:text-sky-400 dark:group-hover:bg-sky-900/30 transition-colors">
+    <div className="p-4 rounded-2xl glass-morphism text-slate-600 group-hover:text-blue-500 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] dark:text-slate-300 dark:group-hover:text-blue-400 transition-all border border-white/20">
       {icon}
     </div>
-    <span className="text-xs font-medium text-slate-500 group-hover:text-slate-900 dark:text-slate-400 dark:group-hover:text-slate-200">{label}</span>
+    <span className="text-xs font-semibold tracking-wide text-slate-500 group-hover:text-slate-900 dark:text-slate-400 dark:group-hover:text-slate-100">{label}</span>
   </motion.button>
 );
 
@@ -292,13 +389,13 @@ const DraggableWindow = ({ window, onClose, onFocus, onMaximize, isDarkMode, isM
       exit={{ scale: 0.9, opacity: 0, y: 20 }}
       drag={!window.isMaximized && !isMobile}
       dragMomentum={false}
-      dragListener={false}
+      dragListener={true} // Changed to true to allow dragging from anywhere
       dragControls={dragControls}
       onDragStart={() => setIsDragging(true)}
       onDragEnd={() => setIsDragging(false)}
       className={cn(
-        "fixed rounded-lg shadow-2xl border overflow-hidden flex flex-col",
-        isDarkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200",
+        "fixed rounded-2xl shadow-2xl border overflow-hidden flex flex-col",
+        isDarkMode ? "glass-dark" : "glass",
         window.isMaximized || isMobile ? "inset-0 rounded-none m-0" : ""
       )}
       style={{
@@ -314,13 +411,13 @@ const DraggableWindow = ({ window, onClose, onFocus, onMaximize, isDarkMode, isM
       {/* Window Header */}
       <div
         className={cn(
-          "h-10 flex items-center justify-between px-4 border-b select-none",
-          isDarkMode ? "bg-slate-800 border-slate-700" : "bg-slate-100 border-slate-200",
+          "h-12 flex items-center justify-between px-6 border-b select-none",
+          isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/5",
           !window.isMaximized && !isMobile ? "cursor-move" : ""
         )}
         onPointerDown={(e) => {
           if (!window.isMaximized && !isMobile) {
-            dragControls.current?.start(e);
+            dragControls.start(e);
             onFocus();
           }
         }}
@@ -352,42 +449,13 @@ const DraggableWindow = ({ window, onClose, onFocus, onMaximize, isDarkMode, isM
   );
 };
 
-const WaveBackground = ({ isDarkMode }) => (
-  <div className="fixed bottom-0 left-0 right-0 pointer-events-none z-0">
-    <svg className="w-full h-32 md:h-48" viewBox="0 0 1440 320" preserveAspectRatio="none">
-      <path
-        fill={isDarkMode ? "rgba(14, 165, 233, 0.05)" : "rgba(14, 165, 233, 0.05)"}
-        fillOpacity="1"
-        d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,160C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-      />
-    </svg>
-  </div>
-);
+
 
 // Content Components
-const AboutContent = () => (
-  <div className="space-y-8 max-w-2xl mx-auto">
-    <div className="flex flex-col md:flex-row items-center gap-6">
-      <img
-        src={`${process.env.PUBLIC_URL}/swapnil.jpg`}
-        alt="Swapnil"
-        className="w-32 h-32 rounded-full object-cover border-4 border-slate-100 dark:border-slate-800 shadow-xl"
-      />
-      <div className="text-center md:text-left">
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Swapnil Negi</h2>
-        <p className="text-sky-600 font-medium">Web Developer • Music Enthusiast • Traveler</p>
-      </div>
-    </div>
-
-    <div className="space-y-6 text-lg leading-relaxed opacity-90">
-      <p>
-        Hi, I'm Swapnil — a passionate and creative web developer who loves turning ideas into sleek, user-friendly websites.
-      </p>
-      <p>
-        With a strong foundation in HTML, CSS, JavaScript, and modern frameworks, I build responsive designs and interactive experiences.
-      </p>
-
-      <Card>
+const AboutContent = () => {
+  const hobbies = [
+    (
+      <Card className="border-0 shadow-none bg-transparent">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             ⚽ Football & Tactics
@@ -395,7 +463,7 @@ const AboutContent = () => (
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            If passion had a Premier League table, I’d be sitting top of the league with football—blue side of Manchester, obviously. I don’t just watch Man City, I overanalyze Pep’s tactics like it’s a PhD thesis.
+            If passion had a Premier League table, I'd be sitting top of the league with football—blue side of Manchester, obviously. I don't just watch Man City, I overanalyze Pep’s tactics like it's a PhD thesis.
           </p>
           <div className="flex gap-4 overflow-x-auto pb-2">
             {['football1.png', 'football2.png', 'football3.png'].map((img, i) => (
@@ -404,8 +472,9 @@ const AboutContent = () => (
           </div>
         </CardContent>
       </Card>
-
-      <Card>
+    ),
+    (
+      <Card className="border-0 shadow-none bg-transparent">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             🎵 Music
@@ -422,8 +491,9 @@ const AboutContent = () => (
           </div>
         </CardContent>
       </Card>
-
-      <Card>
+    ),
+    (
+      <Card className="border-0 shadow-none bg-transparent">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             🏔️ Hiking
@@ -431,7 +501,7 @@ const AboutContent = () => (
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            And when I’m not yelling ‘GOAAALLL,’ I’m chasing actual goals—like climbing at least 10 mountains before 2030.
+            And when I'm not yelling 'GOAAALLL,' I'm chasing actual goals—like climbing at least 10 mountains before 2030.
           </p>
           <div className="flex gap-4 overflow-x-auto pb-2">
             {['mountain1.png', 'mountain2.png', 'mountain3.png', 'mountain4.png'].map((img, i) => (
@@ -440,11 +510,43 @@ const AboutContent = () => (
           </div>
         </CardContent>
       </Card>
-    </div>
-  </div>
-);
+    )
+  ];
 
-const WorkContent = () => (
+  return (
+    <div className="space-y-8 max-w-2xl mx-auto">
+      <div className="flex flex-col md:flex-row items-center gap-6">
+        <img
+          src={`${process.env.PUBLIC_URL}/swapnil.jpg`}
+          alt="Swapnil"
+          className="w-32 h-32 rounded-full object-cover border-4 border-slate-100 dark:border-slate-800 shadow-xl"
+        />
+        <div className="text-center md:text-left">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Swapnil Negi</h2>
+          <p className="text-sky-600 font-medium">Web Developer • Music Enthusiast • Traveler</p>
+        </div>
+      </div>
+
+      <div className="space-y-6 text-lg leading-relaxed opacity-90">
+        <p>
+          Hi, I'm Swapnil — a passionate and creative web developer who loves turning ideas into sleek, user-friendly websites.
+        </p>
+        <p>
+          With a strong foundation in HTML, CSS, JavaScript, and modern frameworks, I build responsive designs and interactive experiences.
+        </p>
+      </div>
+
+      <AnimatedList
+        items={hobbies}
+        showGradients={true}
+        enableArrowNavigation={false}
+        displayScrollbar={true}
+      />
+    </div>
+  );
+};
+
+const WorkContent = ({ isDarkMode }) => (
   <div className="space-y-6 max-w-3xl mx-auto">
     <div className="text-center mb-8">
       <h2 className="text-2xl font-bold mb-2">My Projects</h2>
@@ -452,56 +554,69 @@ const WorkContent = () => (
     </div>
 
     <div className="grid gap-6">
-      <Card className="overflow-hidden group hover:shadow-lg transition-shadow border-slate-200 dark:border-slate-800">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-slate-800 dark:text-slate-100 group-hover:text-sky-600 transition-colors">DailyGitHack</CardTitle>
-            <Button size="sm" variant="outline" asChild className="hover:bg-sky-50 hover:text-sky-600 border-slate-200">
-              <a href="https://github.com/SWAPN1L-code/dailygithack" target="_blank" rel="noopener noreferrer">
-                <Github className="mr-2 h-4 w-4" /> GitHub
-              </a>
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground mb-4">
-            A SwiftUI app that helps you keep your GitHub streak alive by pushing daily commits with style.
-            Generate commit messages, track contribution stats, and push logs directly to your GitHub repo using the GitHub REST API.
-          </p>
-          <div className="flex gap-2 flex-wrap">
-            {['SwiftUI', 'GitHub API', 'iOS'].map(tag => (
-              <span key={tag} className="px-2 py-1 bg-secondary rounded-md text-xs font-medium">
-                {tag}
-              </span>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="overflow-hidden group hover:shadow-lg transition-shadow border-slate-200 dark:border-slate-800">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-slate-800 dark:text-slate-100 group-hover:text-sky-600 transition-colors">Dashboard Website</CardTitle>
-            <Button size="sm" variant="outline" asChild className="hover:bg-sky-50 hover:text-sky-600 border-slate-200">
-              <a href="https://github.com/SWAPN1L-code/dashboard-app" target="_blank" rel="noopener noreferrer">
-                <Github className="mr-2 h-4 w-4" /> GitHub
-              </a>
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground mb-4">
-            I built a customizable Dashboard using HTML, CSS, and JavaScript that brings together widgets like weather, calendar, clock, and task manager in one clean interface.
-          </p>
-          <div className="flex gap-2 flex-wrap">
-            {['HTML', 'CSS', 'JavaScript', 'Widgets'].map(tag => (
-              <span key={tag} className="px-2 py-1 bg-secondary rounded-md text-xs font-medium">
-                {tag}
-              </span>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {[
+        {
+          title: "DailyGitHack",
+          github: "https://github.com/SWAPN1L-code/dailygithack",
+          demo: "#",
+          deployed: "https://dailygithack.vercel.app",
+          videoUrl: "https://www.youtube.com/watch?v=kYmInN20jVw",
+          description: "A SwiftUI app that helps you keep your GitHub streak alive by pushing daily commits with style. Generate commit messages, track contribution stats, and push logs directly to your GitHub repo.",
+          tags: ['SwiftUI', 'GitHub API', 'iOS']
+        },
+        {
+          title: "Dashboard Website",
+          github: "https://github.com/SWAPN1L-code/dashboard-app",
+          demo: "#",
+          deployed: "https://dashboard-swapnil.vercel.app",
+          videoUrl: "https://www.youtube.com/watch?v=kYmInN20jVw",
+          description: "A customizable Dashboard using HTML, CSS, and JavaScript that brings together widgets like weather, calendar, clock, and task manager in one clean interface.",
+          tags: ['HTML', 'CSS', 'JavaScript', 'Widgets']
+        }
+      ].map((project) => (
+        <Card key={project.title} className="overflow-hidden group hover:shadow-lg transition-all border-slate-200 dark:border-slate-800 glass-morphism">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-slate-800 dark:text-slate-100 group-hover:text-sky-600 transition-colors">{project.title}</CardTitle>
+              <div className="flex gap-2">
+                <GlassButton isDarkMode={isDarkMode} asChild className="px-3 py-2 text-xs h-auto">
+                  <a href={project.github} target="_blank" rel="noopener noreferrer">
+                    <Github className="mr-2 h-3.5 w-3.5" /> GitHub
+                  </a>
+                </GlassButton>
+                <GlassButton isDarkMode={isDarkMode} asChild className="px-3 py-2 text-xs h-auto">
+                  <a href={project.deployed} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-2 h-3.5 w-3.5" /> Live
+                  </a>
+                </GlassButton>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground text-sm">
+              {project.description}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {project.tags.map(tag => (
+                <span key={tag} className="px-2 py-1 bg-secondary rounded-md text-[10px] font-medium uppercase tracking-wider">
+                  {tag}
+                </span>
+              ))}
+            </div>
+            <div className="pt-2">
+              <GlassButton
+                isDarkMode={isDarkMode}
+                asChild
+                className="w-full text-xs flex items-center justify-center gap-2 py-3"
+              >
+                <a href={project.videoUrl} target="_blank" rel="noopener noreferrer">
+                  <Play size={14} /> Video Demo Available
+                </a>
+              </GlassButton>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
@@ -538,7 +653,7 @@ const WorkContent = () => (
   </div>
 );
 
-const LinksContent = () => (
+const LinksContent = ({ isDarkMode }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
     {[
       { icon: <Instagram size={24} />, label: "Instagram", href: "https://www.instagram.com", color: "text-pink-500" },
@@ -553,11 +668,12 @@ const LinksContent = () => (
         target="_blank"
         rel="noopener noreferrer"
         className={cn(
-          "flex items-center gap-4 p-4 rounded-xl border bg-card hover:bg-accent transition-all hover:scale-105",
+          "flex items-center gap-4 p-4 rounded-xl border transition-all hover:scale-105 glass-morphism",
+          isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/5",
           link.full ? "sm:col-span-2" : ""
         )}
       >
-        <div className={cn("p-2 rounded-full bg-background shadow-sm", link.color)}>
+        <div className={cn("p-2 rounded-full shadow-sm bg-white/10 dark:bg-white/5", link.color)}>
           {link.icon}
         </div>
         <span className="font-medium">{link.label}</span>
@@ -566,7 +682,7 @@ const LinksContent = () => (
   </div>
 );
 
-const ContactContent = () => (
+const ContactContent = ({ isDarkMode }) => (
   <div className="max-w-md mx-auto text-center space-y-8">
     <div className="w-24 h-24 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto">
       <Mail size={48} className="text-blue-500" />
@@ -602,34 +718,45 @@ const ContactContent = () => (
     </div>
 
     <div className="flex gap-4 justify-center pt-4">
-      <Button asChild className="flex-1">
+      <GlassButton isDarkMode={isDarkMode} className="flex-1" asChild>
         <a href="mailto:swapnilnegi06@gmail.com">Send Email</a>
-      </Button>
-      <Button variant="outline" asChild className="flex-1">
+      </GlassButton>
+      <GlassButton isDarkMode={isDarkMode} className="flex-1" asChild>
         <a href="tel:+919149177159">Call Now</a>
-      </Button>
+      </GlassButton>
     </div>
   </div>
 );
 
-const FaqContent = () => (
-  <div className="space-y-4 max-w-2xl mx-auto">
-    {[
-      { q: "What technologies do you use?", a: "I primarily work with React, Node.js, and Tailwind CSS, but I'm also experienced with SwiftUI for iOS development." },
-      { q: "Are you available for freelance work?", a: "Yes! I'm currently open to new opportunities and interesting projects." },
-      { q: "How long have you been coding?", a: "I've been coding for several years, constantly learning and adapting to new technologies." },
-      { q: "What's your development process?", a: "I focus on user-centric design, clean code, and performance optimization." },
-    ].map((item, i) => (
-      <Card key={i} className="hover:border-sky-200 transition-colors">
-        <CardHeader>
-          <CardTitle className="text-base text-sky-600">{item.q}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">{item.a}</p>
-        </CardContent>
-      </Card>
-    ))}
-  </div>
-);
+const FaqContent = () => {
+  const faqItems = [
+    { q: "What technologies do you use?", a: "I primarily work with React, Node.js, and Tailwind CSS, but I'm also experienced with SwiftUI for iOS development." },
+    { q: "Are you available for freelance work?", a: "Yes! I'm currently open to new opportunities and interesting projects." },
+    { q: "How long have you been coding?", a: "I've been coding for several years, constantly learning and adapting to new technologies." },
+    { q: "What's your development process?", a: "I focus on user-centric design, clean code, and performance optimization." },
+    { q: "Do you work remotely?", a: "Absolutely! I'm comfortable working remotely and have experience collaborating with distributed teams." },
+    { q: "What's your favorite tech stack?", a: "I love working with React, Tailwind CSS, and Framer Motion for creating beautiful, interactive UIs." },
+  ].map((item, i) => (
+    <Card key={i} className="hover:border-sky-200 transition-colors border-0 shadow-none bg-transparent">
+      <CardHeader>
+        <CardTitle className="text-base text-sky-600">{item.q}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground">{item.a}</p>
+      </CardContent>
+    </Card>
+  ));
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <AnimatedList
+        items={faqItems}
+        showGradients={true}
+        enableArrowNavigation={true}
+        displayScrollbar={true}
+      />
+    </div>
+  );
+};
 
 export default Y2KDesktopPortfolio;

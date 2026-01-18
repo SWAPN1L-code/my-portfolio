@@ -58,3 +58,32 @@
         @apply bg-background text-foreground;
     }
 }
+
+.crack-line {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    animation: crack 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+@keyframes crack {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@layer utilities {
+    .glass {
+        @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)];
+    }
+
+    .glass-dark {
+        @apply bg-slate-900/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)];
+    }
+
+    .glass-morphism {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+}
