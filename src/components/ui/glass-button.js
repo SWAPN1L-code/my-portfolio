@@ -8,6 +8,7 @@ export function GlassButton({
     className,
     isDarkMode,
     asChild = false,
+    onClick,
     ...props
 }) {
     const [cracked, setCracked] = useState(false)
@@ -24,8 +25,8 @@ export function GlassButton({
             setAnimating(true)
             setTimeout(() => setAnimating(false), 1000)
         }
-        if (props.onClick) props.onClick(e)
-    }, [darkMode, props.onClick])
+        if (onClick) onClick(e)
+    }, [darkMode, onClick])
 
     return (
         <div className={cn("relative inline-block", asChild ? "w-full" : "")}>

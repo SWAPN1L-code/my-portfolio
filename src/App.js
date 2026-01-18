@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Info, Link, Briefcase, HelpCircle, Mail, Twitter, Instagram, Github, Linkedin, Moon, Sun, Image, Menu, Maximize2, Minimize2 } from 'lucide-react';
+import { X, Info, Link, Briefcase, HelpCircle, Mail, Twitter, Instagram, Github, Linkedin, Moon, Sun, Menu, Maximize2, Minimize2 } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { Button } from './components/ui/button';
 import { GlassButton } from './components/ui/glass-button';
@@ -379,7 +379,6 @@ const NavigationBox = ({ icon, label, onClick, onHover, delay }) => (
 );
 
 const DraggableWindow = ({ window, onClose, onFocus, onMaximize, isDarkMode, isMobile }) => {
-  const [isDragging, setIsDragging] = useState(false);
   const dragControls = useDragControls();
 
   return (
@@ -391,8 +390,6 @@ const DraggableWindow = ({ window, onClose, onFocus, onMaximize, isDarkMode, isM
       dragMomentum={false}
       dragListener={true} // Changed to true to allow dragging from anywhere
       dragControls={dragControls}
-      onDragStart={() => setIsDragging(true)}
-      onDragEnd={() => setIsDragging(false)}
       className={cn(
         "fixed rounded-2xl shadow-2xl border overflow-hidden flex flex-col",
         isDarkMode ? "glass-dark" : "glass",
