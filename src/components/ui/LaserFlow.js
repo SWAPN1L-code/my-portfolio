@@ -427,10 +427,10 @@ export const LaserFlow = ({
         };
         const onMove = ev => updateMouse(ev.clientX, ev.clientY);
         const onLeave = () => mouseTarget.set(0, 0);
-        canvas.addEventListener('pointermove', onMove, { passive: true });
-        canvas.addEventListener('pointerdown', onMove, { passive: true });
-        canvas.addEventListener('pointerenter', onMove, { passive: true });
-        canvas.addEventListener('pointerleave', onLeave, { passive: true });
+        window.addEventListener('pointermove', onMove, { passive: true });
+        window.addEventListener('pointerdown', onMove, { passive: true });
+        window.addEventListener('pointerenter', onMove, { passive: true });
+        window.addEventListener('pointerleave', onLeave, { passive: true });
 
         const onCtxLost = e => {
             e.preventDefault();
@@ -525,10 +525,10 @@ export const LaserFlow = ({
             ro.disconnect();
             io.disconnect();
             document.removeEventListener('visibilitychange', onVis);
-            canvas.removeEventListener('pointermove', onMove);
-            canvas.removeEventListener('pointerdown', onMove);
-            canvas.removeEventListener('pointerenter', onMove);
-            canvas.removeEventListener('pointerleave', onLeave);
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerdown', onMove);
+            window.removeEventListener('pointerenter', onMove);
+            window.removeEventListener('pointerleave', onLeave);
             canvas.removeEventListener('webglcontextlost', onCtxLost);
             canvas.removeEventListener('webglcontextrestored', onCtxRestored);
             geometry.dispose();

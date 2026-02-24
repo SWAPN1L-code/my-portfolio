@@ -1,20 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Info, Link, Briefcase, HelpCircle, Mail, Twitter, Instagram, Github, Linkedin, Moon, Sun, Menu, Maximize2, Minimize2 } from 'lucide-react';
+import { X, Info, Link, Briefcase, HelpCircle, Mail, Twitter, Instagram, Github, Linkedin, Moon, Sun, Menu, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { Button } from './components/ui/button';
 import { GlassButton } from './components/ui/glass-button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import { cn } from './lib/utils';
-import GhostCursor from './components/ui/GhostCursor';
 import LaserFlow from './components/ui/LaserFlow';
 import { Play, ExternalLink } from 'lucide-react';
 import AnimatedList from './components/ui/AnimatedList';
+import { SpotifyWidget } from './components/ui/SpotifyWidget';
 
 const Y2KDesktopPortfolio = () => {
   const [windows, setWindows] = useState([]);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     try {
       const saved = localStorage.getItem('theme');
+      if (saved === null) return false;
+      return JSON.parse(saved) === true;
+    } catch (e) {
+      return false;
+    }
+  });
+  const [isMuted, setIsMuted] = useState(() => {
+    try {
+      const saved = localStorage.getItem('isMuted');
       if (saved === null) return false;
       return JSON.parse(saved) === true;
     } catch (e) {
@@ -47,7 +56,7 @@ const Y2KDesktopPortfolio = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Persist theme
+  // Persist theme and mute state
   useEffect(() => {
     localStorage.setItem('theme', JSON.stringify(isDarkMode));
     if (isDarkMode) {
@@ -57,8 +66,13 @@ const Y2KDesktopPortfolio = () => {
     }
   }, [isDarkMode]);
 
+  useEffect(() => {
+    localStorage.setItem('isMuted', JSON.stringify(isMuted));
+  }, [isMuted]);
+
   // Sound effects
   const playSound = (freq, type = 'sine', duration = 0.1) => {
+    if (isMuted) return;
     try {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
@@ -188,8 +202,35 @@ const Y2KDesktopPortfolio = () => {
         )} />
       </div>
 
-      {/* Dark Mode Toggle */}
+      {/* Top Controls */}
       <div className="fixed top-4 right-4 z-50 flex gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => {
+            setIsMuted(!isMuted);
+            // Only play click sound when unmuting
+            if (isMuted) {
+              try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.type = 'sine';
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+              } catch (e) { }
+            }
+          }}
+          className="rounded-full shadow-lg glass-morphism hover:bg-white/20 transition-all"
+          title={isMuted ? "Unmute sounds" : "Mute sounds"}
+        >
+          {isMuted ? <VolumeX size={20} className="text-slate-500" /> : <Volume2 size={20} className="text-sky-500" />}
+        </Button>
         <Button
           variant="outline"
           size="icon"
@@ -198,16 +239,13 @@ const Y2KDesktopPortfolio = () => {
             setIsDarkMode(!isDarkMode);
           }}
           className="rounded-full shadow-lg glass-morphism hover:bg-white/20 transition-all"
+          title="Toggle Theme"
         >
           {isDarkMode ? <Moon size={20} className="text-blue-400" /> : <Sun size={20} className="text-yellow-500" />}
         </Button>
       </div>
 
-      <GhostCursor
-        color={isDarkMode ? "#ffffff" : "#000000"}
-        bloomStrength={isDarkMode ? 0.8 : 0.3}
-        trailLength={30}
-      />
+
 
       {/* LaserFlow and Reveal Effect now integrated at the root level */}
 
@@ -315,8 +353,8 @@ const Y2KDesktopPortfolio = () => {
           {/* Social Icons */}
           <div className="flex items-center gap-3">
             {[
-              { icon: <Instagram size={16} />, href: "https://www.instagram.com", label: "Instagram" },
-              { icon: <Twitter size={16} />, href: "https://x.com/home", label: "Twitter" },
+              { icon: <Instagram size={16} />, href: "https://www.instagram.com/swapnil_negi_/", label: "Instagram" },
+              { icon: <Twitter size={16} />, href: "https://x.com/SwapnilNegi11rl", label: "Twitter" },
               { icon: <Linkedin size={16} />, href: "https://www.linkedin.com/in/swapnil-negi-46048725a/", label: "LinkedIn" },
               { icon: <Github size={16} />, href: "https://github.com/SWAPN1L-code", label: "GitHub" },
             ].map((social, idx) => (
@@ -544,138 +582,215 @@ const AboutContent = () => {
 };
 
 const WorkContent = ({ isDarkMode }) => (
-  <div className="space-y-6 max-w-3xl mx-auto">
-    <div className="text-center mb-8">
-      <h2 className="text-2xl font-bold mb-2">My Projects</h2>
-      <p className="text-muted-foreground">A collection of my recent work</p>
+  <div className="space-y-8 max-w-4xl mx-auto">
+    <div className="text-center mb-10">
+      <h2 className="text-3xl font-bold mb-3 bg-gradient-to-r from-blue-500 to-sky-600 bg-clip-text text-transparent">My Experience & Projects</h2>
+      <p className="text-muted-foreground text-lg">A detailed look at my professional journey and recent work</p>
     </div>
 
-    <div className="grid gap-6">
-      {[
-        {
-          title: "DailyGitHack",
-          github: "https://github.com/SWAPN1L-code/dailygithack",
-          demo: "#",
-          deployed: "https://dailygithack.vercel.app",
-          videoUrl: "https://www.youtube.com/watch?v=kYmInN20jVw",
-          description: "A SwiftUI app that helps you keep your GitHub streak alive by pushing daily commits with style. Generate commit messages, track contribution stats, and push logs directly to your GitHub repo.",
-          tags: ['SwiftUI', 'GitHub API', 'iOS']
-        },
-        {
-          title: "Dashboard Website",
-          github: "https://github.com/SWAPN1L-code/dashboard-app",
-          demo: "#",
-          deployed: "https://dashboard-swapnil.vercel.app",
-          videoUrl: "https://www.youtube.com/watch?v=kYmInN20jVw",
-          description: "A customizable Dashboard using HTML, CSS, and JavaScript that brings together widgets like weather, calendar, clock, and task manager in one clean interface.",
-          tags: ['HTML', 'CSS', 'JavaScript', 'Widgets']
-        }
-      ].map((project) => (
-        <Card key={project.title} className="overflow-hidden group hover:shadow-lg transition-all border-slate-200 dark:border-slate-800 glass-morphism">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-slate-800 dark:text-slate-100 group-hover:text-sky-600 transition-colors">{project.title}</CardTitle>
-              <div className="flex gap-2">
-                <GlassButton isDarkMode={isDarkMode} asChild className="px-3 py-2 text-xs h-auto">
-                  <a href={project.github} target="_blank" rel="noopener noreferrer">
-                    <Github className="mr-2 h-3.5 w-3.5" /> GitHub
-                  </a>
-                </GlassButton>
-                <GlassButton isDarkMode={isDarkMode} asChild className="px-3 py-2 text-xs h-auto">
-                  <a href={project.deployed} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="mr-2 h-3.5 w-3.5" /> Live
-                  </a>
-                </GlassButton>
+    {/* Section: Experience */}
+    <div className="space-y-6">
+      <h3 className="text-xl font-semibold flex items-center gap-2 border-b pb-2 border-slate-200 dark:border-slate-800">
+        <Briefcase className="text-blue-500" /> Experience
+      </h3>
+      <div className="grid gap-6">
+        {[
+          {
+            role: "Software Engineering INTERN (Full Stack)",
+            company: "SPAI Labs",
+            date: "Dec 2025 -- Present",
+            location: "India",
+            highlights: [
+              "Built and maintained 20+ RESTful APIs using Node.js, Express.js, and MySQL, handling 500+ daily requests with stable performance.",
+              "Implemented authentication and validation mechanisms, reducing backend runtime errors by 40%.",
+              "Diagnosed and resolved 30+ production issues, improving system uptime and reliability.",
+              "Optimized backend logic using data structures and algorithmic improvements, reducing API response time by 35%.",
+              "Led backend implementation of multiple core features, ensuring clean architecture and maintainable codebase.",
+              "Collaborated with 4+ engineers in Agile development, contributing to 15+ pull requests and feature releases."
+            ]
+          },
+          {
+            role: "Software Engineering Contributor",
+            company: "Open Source Contributions",
+            date: "2025 -- Present",
+            location: "Remote",
+            highlights: [
+              "Developed 10+ reusable frontend components using React.js, improving development efficiency by 25%.",
+              "Resolved 12+ bugs and performance issues, improving system responsiveness and stability.",
+              "Contributed 20+ commits and pull requests, collaborating with global contributors using Git workflows.",
+              "Participated in peer code reviews and issue tracking to ensure maintainable and high-quality code."
+            ]
+          }
+        ].map((job, idx) => (
+          <Card key={idx} className="overflow-hidden group hover:shadow-lg transition-all border-slate-200 dark:border-slate-800 glass-morphism">
+            <CardHeader className="pb-2">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                <div>
+                  <CardTitle className="text-lg font-bold text-slate-800 dark:text-slate-100">{job.role}</CardTitle>
+                  <p className="text-blue-600 dark:text-blue-400 font-medium">{job.company}</p>
+                </div>
+                <div className="text-left md:text-right text-sm text-slate-500">
+                  <p className="font-semibold">{job.date}</p>
+                  <p>{job.location}</p>
+                </div>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground text-sm">
-              {project.description}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {project.tags.map(tag => (
-                <span key={tag} className="px-2 py-1 bg-secondary rounded-md text-[10px] font-medium uppercase tracking-wider">
-                  {tag}
-                </span>
-              ))}
-            </div>
-            <div className="pt-2">
-              <GlassButton
-                isDarkMode={isDarkMode}
-                asChild
-                className="w-full text-xs flex items-center justify-center gap-2 py-3"
-              >
-                <a href={project.videoUrl} target="_blank" rel="noopener noreferrer">
-                  <Play size={14} /> Video Demo Available
-                </a>
-              </GlassButton>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+            </CardHeader>
+            <CardContent>
+              <ul className="list-disc list-inside space-y-1.5 text-sm text-muted-foreground mt-2">
+                {job.highlights.map((item, i) => (
+                  <li key={i} className="leading-relaxed">
+                    <span className="-ml-1">{item.replace(/\\textbf{([^}]+)}/g, '$1')}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground">Skills</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {['HTML/CSS', 'JavaScript', 'React', 'SwiftUI', 'Node.js', 'Git/GitHub', 'Tailwind'].map(skill => (
-              <span key={skill} className="px-3 py-1 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 rounded-full text-sm font-medium">
-                {skill}
-              </span>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+    {/* Section: Projects */}
+    <div className="space-y-6 mt-12">
+      <h3 className="text-xl font-semibold flex items-center gap-2 border-b pb-2 border-slate-200 dark:border-slate-800">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+        Projects
+      </h3>
+      <div className="grid gap-6">
+        {[
+          {
+            title: "Navigatorrr — Browser Extension",
+            github: "https://github.com/SWAPN1L-code/navigatorrr",
+            demo: "https://www.youtube.com/watch?v=C0d9YiIgGQY",
+            description: [
+              "Built a cross-browser productivity extension with 100+ active users, improving navigation efficiency.",
+              "Designed modular abstraction architecture, reducing maintenance effort by 40%.",
+              "Implemented automated DOM monitoring to ensure consistent functionality across UI updates."
+            ],
+            tags: ['JavaScript', 'DOM APIs']
+          },
+          {
+            title: "Real-Time Chat and Video Application (Frenmio)",
+            github: "https://github.com/SWAPN1L-code/frenmio",
+            demo: "https://www.youtube.com/watch?v=C0d9YiIgGQY",
+            description: [
+              "Developed real-time messaging system supporting 50+ concurrent users using WebRTC and Socket.IO.",
+              "Built backend services managing 1000+ messages daily with persistent storage and session management.",
+              "Debugged synchronization issues and improved system reliability during concurrent usage."
+            ],
+            tags: ['React.js', 'Node.js', 'MongoDB', 'WebRTC']
+          }
+        ].map((project) => (
+          <Card key={project.title} className="overflow-hidden group hover:shadow-lg transition-all border-slate-200 dark:border-slate-800 glass-morphism">
+            <CardHeader className="pb-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <CardTitle className="text-slate-800 dark:text-slate-100 group-hover:text-blue-500 transition-colors">{project.title}</CardTitle>
+                <div className="flex gap-2">
+                  {project.github && (
+                    <GlassButton isDarkMode={isDarkMode} asChild className="px-3 py-1.5 text-xs h-auto">
+                      <a href={project.github} target="_blank" rel="noopener noreferrer">
+                        <Github className="mr-2 h-3.5 w-3.5" /> GitHub
+                      </a>
+                    </GlassButton>
+                  )}
+                  {project.demo && (
+                    <GlassButton isDarkMode={isDarkMode} asChild className="px-3 py-1.5 text-xs h-auto bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 border">
+                      <a href={project.demo} target="_blank" rel="noopener noreferrer">
+                        <Play className="mr-2 h-3.5 w-3.5" /> Demo Video
+                      </a>
+                    </GlassButton>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ul className="list-disc list-inside space-y-1.5 text-sm text-muted-foreground mt-2">
+                {project.description.map((desc, i) => (
+                  <li key={i} className="leading-relaxed">
+                    <span className="-ml-1">{desc}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex flex-wrap gap-2 pt-2">
+                {project.tags.map(tag => (
+                  <span key={tag} className="px-2.5 py-1 bg-secondary rounded-md text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground">Platforms</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {['GitHub', 'LeetCode', 'LinkedIn', 'Vercel', 'XCode'].map(platform => (
-              <span key={platform} className="px-3 py-1 bg-sky-50 text-sky-600 dark:bg-sky-900/20 dark:text-sky-300 rounded-full text-sm font-medium">
-                {platform}
-              </span>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+    {/* Section: Technical Skills */}
+    <div className="space-y-4 mt-8">
+      <h3 className="text-xl font-semibold flex items-center gap-2 border-b pb-2 border-slate-200 dark:border-slate-800">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+        Technical Skills
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[
+          { category: "Languages", items: ["C", "C++", "JavaScript"] },
+          { category: "Frontend", items: ["HTML", "CSS", "React.js"] },
+          { category: "Backend", items: ["Node.js", "Express.js", "REST APIs"] },
+          { category: "Databases", items: ["MongoDB", "MySQL"] },
+          { category: "CS Core", items: ["Data Structures", "Algorithms", "OOP", "OS", "DBMS"] },
+        ].map((skillGroup, idx) => (
+          <Card key={idx} className="border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-black/20 shadow-sm hover:shadow-md transition-all">
+            <CardContent className="p-4 flex flex-col h-full">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground font-bold mb-3">{skillGroup.category}</span>
+              <div className="flex flex-wrap gap-2 mt-auto">
+                {skillGroup.items.map(skill => (
+                  <span key={skill} className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-xs font-medium">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   </div>
 );
 
 const LinksContent = ({ isDarkMode }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
-    {[
-      { icon: <Instagram size={24} />, label: "Instagram", href: "https://www.instagram.com", color: "text-pink-500" },
-      { icon: <Twitter size={24} />, label: "X (Twitter)", href: "https://x.com/home", color: "text-blue-400" },
-      { icon: <Linkedin size={24} />, label: "LinkedIn", href: "https://www.linkedin.com/in/swapnil-negi-46048725a/", color: "text-blue-600" },
-      { icon: <Briefcase size={24} />, label: "LeetCode", href: "https://leetcode.com/u/30NK3T28Ag/", color: "text-yellow-500" },
-      { icon: <Github size={24} />, label: "GitHub", href: "https://github.com/SWAPN1L-code", color: "text-gray-800 dark:text-white", full: true },
-    ].map((link, i) => (
-      <a
-        key={link.label}
-        href={link.href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={cn(
-          "flex items-center gap-4 p-4 rounded-xl border transition-all hover:scale-105 glass-morphism",
-          isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/5",
-          link.full ? "sm:col-span-2" : ""
-        )}
-      >
-        <div className={cn("p-2 rounded-full shadow-sm bg-white/10 dark:bg-white/5", link.color)}>
-          {link.icon}
-        </div>
-        <span className="font-medium">{link.label}</span>
-      </a>
-    ))}
+  <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {[
+        { icon: <Instagram size={24} />, label: "Instagram", href: "https://www.instagram.com/swapnil_negi_/", color: "text-pink-500" },
+        { icon: <Twitter size={24} />, label: "X (Twitter)", href: "https://x.com/SwapnilNegi11rl", color: "text-blue-400" },
+        { icon: <Linkedin size={24} />, label: "LinkedIn", href: "https://www.linkedin.com/in/swapnil-negi-46048725a/", color: "text-blue-600" },
+        { icon: <Briefcase size={24} />, label: "LeetCode", href: "https://leetcode.com/u/30NK3T28Ag/", color: "text-yellow-500" },
+        { icon: <Github size={24} />, label: "GitHub", href: "https://github.com/SWAPN1L-code", color: "text-gray-800 dark:text-white", full: true },
+      ].map((link, i) => (
+        <a
+          key={link.label}
+          href={link.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(
+            "flex items-center gap-4 p-4 rounded-xl border transition-all hover:scale-105 glass-morphism",
+            isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/5",
+            link.full ? "sm:col-span-2" : ""
+          )}
+        >
+          <div className={cn("p-2 rounded-full shadow-sm bg-white/10 dark:bg-white/5", link.color)}>
+            {link.icon}
+          </div>
+          <span className="font-medium">{link.label}</span>
+        </a>
+      ))}
+    </div>
+
+    {/* Spotify Widget integration */}
+    <div className="pt-4 mt-4 border-t border-slate-200 dark:border-slate-800">
+      <h3 className="text-xl font-semibold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-green-500 to-emerald-600">
+        Currently Vibing To
+      </h3>
+      <SpotifyWidget isDarkMode={isDarkMode} />
+    </div>
   </div>
 );
 
