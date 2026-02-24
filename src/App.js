@@ -6,7 +6,7 @@ import { GlassButton } from './components/ui/glass-button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import { cn } from './lib/utils';
 import LaserFlow from './components/ui/LaserFlow';
-import { Play, ExternalLink } from 'lucide-react';
+import { Play } from 'lucide-react';
 import AnimatedList from './components/ui/AnimatedList';
 import { SpotifyWidget } from './components/ui/SpotifyWidget';
 
